@@ -12,8 +12,6 @@ PORT = 55000
 
 #HOST = "127.0.0.1"
 #PORT = 1390
-#ELF_PATH = "./SecretHolder_d6c0bed6d695edc12a9e7733bedde182554442f8"
-#LIBC_PATH = "/lib/x86_64-linux-gnu/libc.so.6"
 
 # setting
 
@@ -24,23 +22,6 @@ context.word_size = 32
 # ['CRITICAL', 'DEBUG', 'ERROR', 'INFO', 'NOTSET', 'WARN', 'WARNING']
 
 context.log_level = 'INFO'
-
-#elf = ELF(ELF_PATH)
-#libc = ELF(LIBC_PATH)
-
-def my_recvuntil(s, delim):
-    res = ""
-    while delim not in res:
-        c = s.recv(1)
-        res += c
-        sys.stdout.write(c)
-        sys.stdout.flush()
-    return res
-
-def myexec(cmd):
-    return subprocess.check_output(cmd, shell=True)
-
-
 
 if __name__ == "__main__":
 
