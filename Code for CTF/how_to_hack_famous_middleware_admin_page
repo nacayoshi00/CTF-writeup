@@ -1,0 +1,2 @@
+-tomcat default tomcat:tomcat
+   http://tomcat:tomcat@localhost:8080/manager/html

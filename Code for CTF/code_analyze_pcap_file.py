@@ -1,12 +1,17 @@
+
+# 0. import library
 import dpkt, socket
 import string
 import binascii
 import sys
 
-count = 0
+# 1. open the pcap file
 fw = open("aaa.txt","w")
 
 with open("/home/prayer/Desktop/RU3_CTF/somepang.pcap", "rb") as f:
+
+
+# Read pcap file by dpkt
     pcr = dpkt.pcap.Reader(f)
     for t, buf in pcr:
         eth = dpkt.ethernet.Ethernet(buf)
