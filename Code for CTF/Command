@@ -87,7 +87,11 @@ http://pentestmonkey.net/cheat-sheet/sql-injection/mysql-sql-injection-cheat-she
 
 
 
-
+Command Injection
+ bash parameters
+ 「;」「|」「&」「`」「(」「)」
+ other parameters
+ 「$」「<」「>」「*」「?」「{」「}」「[」「]」「!」
 
 
 
