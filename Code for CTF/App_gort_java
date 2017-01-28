@@ -1,0 +1,303 @@
+- SQL injection(java JDBC driver)
+
+----
+String sql = "SELECT * FROM user WHERE id='"+id+"' AND name ='"+name+"';";
+Statement stmt = con.createStatement();
+ResultSet rs = stmt.executeQuery(sql);
+
+----
+String sql = "SELECT * FROM user WHERE id = ? AND name = ? ;";
+PreparedStatement stmt = con.prepareStatement(sql);
+stmt.setString(1, id);
+stmt.setString(2, name);
+ResultSet rs = stmt.executeQuery();
+
+- SQL injection(ruby)
+
+----
+user=User.where("id='#{id}' AND name = '#{name}'")
+if user
+    session[:id] = user.id
+end
+
+----
+user=User.where("id= ? AND name = ?",id,name)
+if user
+    session[:id] = user.id
+end
+
+- CSRF(java)
+
+----
+//トークンにセッションを埋め込んでいない
+Request.getRequestDispatcher("Sample.jsp").forward(request,response);
+
+図 1：未対策のJavaコード（form移動前）
+
+<!-- 脆弱なコード ->
+<form action="test" method="POST">
+    新パスワード<input name="newPassword" type="password">
+    <!-- トークンにセッションを埋め込んでいない ->
+    <input type="submit" value="パスワード変更">
+</form>
+
+図 2：未対策のJSPコード
+
+//脆弱なコード
+//移動前と処理実行後のトークンを比較していない
+String password=request.getParameter("newPassword");
+//以下パスワード変更処理
+
+図 3：未対策のJavaコード
+
+----
+HttpSession session = request.getSession();
+Session.setAttribute("token",session.getId());
+Request.getRequestDispatcher
+("Sample.jsp").forward(request,response);
+
+図 4：クロスサイト・リクエスト・フォージェリ対策済のJavaコード(form移動前)
+
+<form action="test" method="POST">
+    新パスワード<input name="newPassword" type="password">
+    <input type="hidden" name="token" value="<%=session.getAttribute("token") %>">
+        <input type="submit" value="パスワード変更">
+</form>
+
+図 5：クロスサイト・リクエスト・フォージェリ対策済のJSPコード
+
+HttpSession session = request.getSession();
+String token=(String)session.getAttribute("token");
+if(token!=null && token.equals(request.getParameter("token"))){
+    String password=request.getParameter("newPassword");
+    //以下パスワード変更処理
+}
+
+
+- CSRF (ruby)
+
+----
+protect_from_forgery with: :null_session
+
+----
+protect_from_forgery with: :exception
+
+
+- Directory Travasal(java)
+
+----
+public class Sample extends HttpServlet {
+    public void doGet(HttpServletRequest request, HttpServletResponse response)
+    throws IOException, ServletException{
+        public static final String TMPLDIR = "/var/www/dt/tmpl/";
+        String path = request.getParameter("path");
+        File file = new File(TMPLDIR + path);
+        //ファイルパスから相対パス部分を取り除いていない
+        FileReader filereader = new FileReader(file);
+    }
+}
+
+----
+public class Sample extends HttpServlet {
+    public void doGet(HttpServletRequest request, HttpServletResponse response)
+    throws IOException, ServletException {
+        public static final String TMPLDIR = "/var/www/dt/tmpl/";
+        String path = request.getParameter("path");
+        File file = new File(path);
+        // getName()によりファイルパスからファイル名のみを取得する
+        String name = file.getName();
+        File file2 = new File(TMPLDIR + name);
+        FileReader filereader = new FileReader(file2);
+    }
+}
+
+
+- Directory Travasal(Ruby)
+----
+TMPDIR = "/var/www/dt/tmpl/"
+path = params[:filename]
+
+if path
+    #ファイルパスから相対パス部分を取り除いていない
+    data = File.read(TMPDIR + path)
+else
+    raise "Access denied"
+end
+
+----
+TMPDIR = "/var/www/dt/tmpl/"
+path = params[:filename]
+
+if path
+    # File.basenameによりファイルパスからファイル名のみを取得する
+    data = File.read(TMPDIR + File.basename(path))
+else
+    raise "Access denied"
+end
+
+
+-command Injection(java)
+----
+public static final String TMPLDIR = "/var/www/dt/tmpl/";
+String dirname=TMPLDIR+request.getParameter("dirname");
+Runtime rt = Runtime.getRuntime();
+//脆弱なコード　明示的にシェルを実行する。
+rt.exec("cmd.exe mkdir "+dirname);
+
+----
+public static final String TMPLDIR = "/var/www/dt/tmpl/";
+String dirname=TMPLDIR+request.getParameter("dirname");
+Runtime rt = Runtime.getRuntime();
+rt.exec("mkdir "+dirname);
+
+
+-command Injection(Ruby)
+
+----
+TMPDIR = "/var/www/dt/tmpl/"
+dirname = TMPLDIR+params[:dirname]
+system("mkdir "+dirname)
+
+----
+TMPDIR = "/var/www/dt/tmpl/"
+dirname = TMPLDIR+params[:dirname]
+system("mkdir",dirname)
+
+
+-Session hijack(java)
+----
+public class Login extends HttpServlet {
+    protected void doPost(HttpServletRequest req, HttpServletResponse res)
+        throws ServletException, IOException {
+
+    //ログイン処理成功時
+    //セッション取得
+    HttpSession session = req.getSession(true);
+    //既存セッションの破棄、新規セッションの取得をしていない
+    //セッションに値を格納
+    session.setAttribute("id", req.getParameter("id"));
+    //後略
+    }
+}
+
+----
+public class Login extends HttpServlet {
+    protected void doPost(HttpServletRequest req, HttpServletResponse res)
+        throws ServletException, IOException {
+
+    //ログイン処理成功時
+    //セッション取得
+    HttpSession session = req.getSession(true);
+    //既存セッション破棄
+    session.invalidate();
+    //新規セッションを開始
+    HttpSession newSession = req.getSession(true);
+    //新しいセッションに値を格納
+    newSession.setAttribute("id", req.getParameter("id"));
+    //後略
+    }
+}
+
+- session hijack(java)
+
+----
+//ページ処理時
+String message = "ようこそ"+ request.getParameter("id")+"さん";
+//セッションを発行していない
+
+図 1：未対策のJavaコード（ログインが必要なページ)
+
+----
+//ログイン処理成功時
+HttpSession session = request.getSession();
+session.setAttribute("id",user.getId());
+
+図 2：認証対策済のJavaコード（ログイン時)
+
+//ページ処理時
+HttpSession session = request.getSession();
+String message;
+if(session.getAttribute("id") != null){
+    message = "ようこそ"+ session.getAttribute("id")+"さん";
+}else{
+    message = "アクセス違反です。先にログインしてください。";
+}
+
+図 3：認証対策済のJavaコード（ログインが必要なページ）
+
+
+
+-session hijack(ruby)
+----
+user=User.find_by(id: params[:id],password: params[:password])
+#セッション情報を発行していない
+
+図 4：未対策のRuby on Railsコード（ログイン時）
+
+
+#ページ処理時
+#セッション情報を発行していない
+@message="ようこそ"+params[id]+"さん"
+
+図 5：未対策のRuby on Railsコード（ログインが必要なページ）
+
+----
+user=User.find_by(id: params[:id],password: params[:password])
+if user
+    session[:id] = user.id
+end
+
+図 6：認証対策済のRuby on Railsコード（ログイン時）
+
+
+#ページ処理時
+if session[:id]
+    @message="ようこそ"+ session[:id]+"さん"
+else
+    @message="アクセス違反です。先にログインしてください。"
+end
+
+図 7：認証対策済のRuby on Railsコード（ログインが必要なページ）
+
+
+- HTTP header Injection
+
+----
+def redirect
+    referer = params[:location]
+    # 改行をエスケープしていない
+    redirect_to referer
+end
+
+----
+def redirect
+    referer = params[:location]
+    if referer.match(/\r|\n/) == nil then
+        redirect_to referer
+    end
+end
+
+
+- erase server information
+
+----
+ httpd.conf
+    ServerSignature Off
+    ServerTokens ProductOnly
+
+
+----
+Tomcat（8.0.32）
+    web.xmlのerror-page要素を記述する。error-page要素はweb-app要素の中、welcome-file-list要素の後、tag lib要素の前に記述すること。
+
+
+    <web-app>
+    ...
+    </welcome-file-list>
+    <error-page>
+    <error-code>404</error-code>
+    <location>/WEB-INF/404.html</location>
+    </error-page>
+    <taglib>
+    ...
+    </web-app>

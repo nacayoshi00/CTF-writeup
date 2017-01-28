@@ -1,0 +1,446 @@
+
+-XSS  reflection/stored base(php)
+----
+public function get_error_name()
+{
+    // リクエストパラメータを取得
+    $param = $this->get_get();
+    // リクエストパラメータに名前がセットされている場合
+    if (isset($param[parent::NAME])) {
+        return $param[parent::NAME];
+    // リクエストパラメータに名前がセットされていない場合
+    } else {
+        return "";
+    }
+}
+
+----
+
+public function get_error_name()
+{
+    // リクエストパラメータを取得
+    $param = $this->get_get();
+    // リクエストパラメータに名前がセットされている場合
+    if (isset($param[parent::NAME])) {
+        return htmlspecialchars($param[parent::NAME], ENT_QUOTES, "UTF-8");
+    // リクエストパラメータに名前がセットされていない場合
+    } else {
+        return "";
+    }
+}
+
+
+
+
+-XSS DOM base(javascript)
+
+try {
+    // URLからキーワードを抽出する
+    var keyword = get_keyword();
+    // キーワードをデコードする
+    keyword = decodeURIComponent(keyword);
+    // キーワードを表示する
+    document.write(keyword);
+// 以下略
+
+----
+
+try {
+    // URLからキーワードを抽出する
+    var keyword = get_keyword();
+    // キーワードをデコードする
+    keyword = decodeURIComponent(keyword);
+    // キーワードを表示する
+    var div = document.getElementById('query_string');
+    div.appendChild(document.createTextNode(keyword));
+// 以下略
+
+-
+
+-SQL Injection(php)
+
+public function login()
+{
+    $db = $this->get_db();
+    $param = $this->get_param();
+    try {
+        // ユーザからの入力値を文字列連結してSQL文を組み立てている
+        $stmt = $db->prepare("SELECT * FROM user WHERE id = '" . $param["id"] . "' AND
+                              password = '" . $param["password"] .  "';");
+        if ($stmt == null) {
+            throw new Exception();
+        }
+        // プレースホルダを使わずにプリペアドステートメントを実行している
+        $stmt->execute();
+// 以降は省略
+
+----
+public function login()
+{
+    $db = $this->get_db();
+    $param = $this->get_param();
+    try {
+        // 疑問符パラメータを用いてSQLステートメントを準備する
+        $stmt = $db->prepare("SELECT * FROM user WHERE id = ? AND password = ?");
+        if ($stmt == null) {
+            throw new Exception();
+        }
+        // 値の配列を渡してプリペアドステートメントを実行する
+        $stmt->execute(array($param["id"], $param["password"]));
+// 以降は省略
+
+
+- CSRF(php)
+
+<?php
+    public function prepare_set_token() {
+        // 中略
+        // tokenをセット
+        $session[$this->get_login()][self::TOKEN] = $token["value"];
+        $this->set_session($this->get_login(), $session[$this->get_login()]);
+        return $this;
+    }
+?>
+
+----
+<?php
+    public function prepare_set_token() {
+        // 中略
+        $session[$this->get_login()][self::TOKEN] = session_id();
+        $this->set_session($this->get_login(), $session[$this->get_login()]);
+        return $this;
+    }
+?>
+
+----
+<?php
+// トークンのチェックを行わないで、各ページの処理を行う
+    public function validate_is_logined()
+    {
+        $session = $this->get_session();
+        $param = $this->get_param();
+
+        // ログイン処理を行います
+        parent::validate_is_logined();
+    }
+?>
+
+- CSRF(php)
+
+----
+<?php
+// トークンのチェックを行わないで、各ページの処理を行う
+    public function validate_is_logined()
+    {
+        $session = $this->get_session();
+        $param = $this->get_param();
+
+        // ログイン処理を行います
+        parent::validate_is_logined();
+    }
+?>
+
+----
+<?php
+    public function validate_is_logined()
+    {
+        $session = $this->get_session();
+        $param = $this->get_param();
+        if (($this->get_page() == parent::PAGE_SETTING)
+             && isset($session[$this->get_login()]["secret"])
+             && ($session[$this->get_login()]["secret"] !== $param["secret_token"])
+        ) {
+            $this->set_session($this->get_login(), false);
+            $this->set_page(parent::PAGE_LOGIN);
+            $this->set_content(self::WARNING9, true);
+            return false;
+        } else {
+            // ログイン処理を行います
+            parent::validate_is_logined();
+        }
+    }
+?>
+
+- Directory travasal(php)
+
+public function proc_readfile()
+{
+// 中略
+    // リクエストパラメタを取得
+    $param = $this->get_param();
+    // リクエストパラメタからファイル名を取得
+    $filename = (string)$param[parent::FILENAME];
+    // ファイル名がセットされている場合
+    if ((isset($filename)) && ($filename != "")) {
+        // 商品登録ファイルへのパスを作成
+        $filePath = parent::GOODS_FILE_PATH. $filename;
+// 後略
+
+----
+
+public function proc_readfile()
+{
+// 中略
+    // リクエストパラメタを取得
+    $param = $this->get_param();
+    // リクエストパラメタからファイル名を取得
+    $filename = (string)$param[parent::FILENAME];
+    // ファイル名がセットされている場合
+    if ((isset($filename)) && ($filename != "")) {
+        // 商品登録ファイルへのパスを作成
+        $filePath = parent::GOODS_FILE_PATH. basename($filename);
+// 後略
+
+
+- Command Injection(php)
+
+public function proc_rename_file()
+{
+// 中略
+    // 変更前と変更後のファイル名が異なる場合
+    } else {
+        // 変更前ファイル名をパス付きで指定
+        $oldname = parent::GOODS_FILE_PATH. basename($oldname);
+
+        // 変更前ファイルが存在する場合
+        if (is_file($oldname)) {
+            // ファイル名を変更するコマンド実行
+            $result = exec("rename " . $oldname . " " . $newname, $output);
+// 後略
+
+----
+public function proc_rename_file()
+{
+// 中略
+    // 変更前と変更後のファイル名が異なる場合
+    } else {
+        // 変更前ファイル名をパス付きで指定
+        $oldname = parent::GOODS_FILE_PATH. basename($oldname);
+
+        // 変更前ファイルが存在する場合
+        if (is_file($oldname)) {
+            // ファイル名を変更するコマンド実行
+            $newname = parent::GOODS_FILE_PATH. $newname;
+            $result = rename($oldname, $newname);
+// 後略
+
+
+-session fixation(php)
+----
+<?php
+    //前略
+    //現在日時を取得して並べ替えた値をセッションIDとして使用する
+    $dtoken = getdate();
+    $stoken = $dtoken['mday'].$dtoken['hours'].$dtoken['mon']
+        .$dtoken['minutes'].$dtoken['year'].$dtoken['seconds'];
+    session_destroy();
+    //セッションIDの設定
+    session_id($stoken);
+    session_start();
+    //後略
+?>
+----
+<?php
+    //前略
+    session_destroy();
+    session_start();
+    session_regenerate_id();
+    //後略
+?>
+
+- HTTP header injection
+----
+<?php
+    //リダイレクト関数を定義する
+    function redirect($url) {
+        //改行のチェックを行わない
+        header('Location: ' . $url);
+    }
+    //呼び出し例
+    $url = isset($_GET['url']) ? $_GET['url'] : '';
+    redirect($url);
+?>
+
+----
+<?php
+    //リダイレクト関数を定義する
+    function redirect($url) {
+    //URLとして不適切な文字があればエラーとして処理を停止する
+        if(preg_match('/\r|\n/', $url)) {
+             die('Bad URL');
+        }
+        header('Location: ' . $url);
+    }
+    //呼び出し例
+    $url = isset($_GET['url']) ? $_GET['url'] : '';
+    redirect($url);
+?>
+
+-session hijaca
+
+----
+<?php
+    //ログイン処理後
+    //脆弱なコード　ログイン後に情報を持たせていない
+?>
+
+<?php
+    //脆弱なコード  ログインしていることを確認していない
+    print("ようこそ". $_POST["id"] . "さん");
+?>
+
+----
+<?php
+    session_start();
+    //ログイン処理後
+    session_regenerate_id(true);
+    //セッションを持たせてログインしていることが分かるようにする
+    $_SESSION["id"]=$_POST["id"];
+?>
+
+<?php
+    session_start();
+    //セッション情報をもっていることを確認する
+    if(isset($_SESSION["id"]){
+        print("ようこそ". $_SESSION["id"] ."さん");
+    }
+?>
+
+----
+<?php
+    public function validate_is_logined_admin()
+    {
+        $session = $this->get_session();
+        if (!(in_array((string)$this->get_page(), $this->_non_login_pages))
+           && ($this->is_not_login())) {
+            $this->set_session($this->get_login(), false);
+            $this->set_page(parent::PAGE_LOGIN);
+            $this->set_content(parent::WARNING2, true);
+            return $this;
+        // ログインユーザの権限のチェックを行っていない
+        } else {
+            $this->is_success();
+            return true;
+        }
+    }
+?>
+----
+<?php
+    public function validate_is_logined_admin()
+    {
+        $session = $this->get_session();
+        if (!(in_array((string)$this->get_page(), $this->_non_login_pages))
+           && ($this->is_not_login())) {
+            $this->set_session($this->get_login(), false);
+            $this->set_page(parent::PAGE_LOGIN);
+            $this->set_content(parent::WARNING2, true);
+            return $this;
+        } elseif ($session[$this->get_login()]["auth"] !== "admin") {
+            $this->set_session($this->get_login(), false);
+            $this->set_page(parent::PAGE_LOGIN);
+            $this->set_content(parent::WARNING12, true);
+            return $this;
+        } else {
+            $this->is_success();
+            return true;
+        }
+    }
+?>
+
+
+- click jacking (http_conf)
+  サーバ側（Apache）で設定する場合は、httpd.conf内で以下のように修正しましょう。
+   Header always append X-Frame-Options SAMEORIGIN
+
+   <?php
+   // 前処理略
+
+   // ヘッダ出力処理
+   header("X-Frame-Options: SAMEORIGIN");
+
+   // 後処理略
+   ?>
+
+
+-mail header Injection(php)
+----
+public function proc_send()
+{
+    $param = $this->get_param();
+    // メール送信処理
+    $message=$param[self::MESSAGE];
+    $message=wordwrap($message, 70, "\r\n");
+    $to_address=self::TO_ADDRESS;
+    $title=$param[self::SUBJECT];
+    $headers .= 'From:'. $param[self::FROM];
+    //後略
+
+--
+public function proc_send()
+{
+    $param = $this->get_param();
+    // メール送信処理
+    $message=$param[self::MESSAGE];
+    $message=wordwrap($message, 70, "\r\n");
+    $to_address=self::TO_ADDRESS;
+    $title=$param[self::SUBJECT];
+    if(!preg_match('/\r|\n/', $param[self::FROM])){
+        $headers .= 'From:'. $param[self::FROM];
+    }
+    //後略
+
+- erase php VERSION(httpd.conf)
+
+ServerTokens Minimal       ->          ServerTokens ProductOnly
+
+
+-open redirect
+
+----
+public function validate_redirect_url()
+{
+    $param=$this->get_param();
+
+    //Usersディレクトリ用のアカウント名取得
+    $session=AppGoatUtil::getSession();
+    $username=$session[COLUMN_USERNAME];
+
+    // ホスト名取得且つ正規表現用にエスケープ
+    $host=preg_quote($_SERVER['HTTP_HOST'], '/');
+    $str="/".$host."\/Users\/".$username."\/Web\/Scenario2631\/EditSoft/";
+
+    //文字列チェックに用いる正規表現
+    //本演習では「ホスト名/Web/Scenario2631/EditSoft」をドメインとします
+    //リダイレクト先に設定されたURL
+    $url=$param[parent::REDIRECT_URL];
+
+    //正規表現マッチを行い、一致すればtrueを返す
+    if(preg_match($str,$url)) {
+        return true;
+    }
+    return false;
+}
+----
+public function validate_redirect_url()
+{
+    $param=$this->get_param();
+
+    //Usersディレクトリ用のアカウント名取得
+    $session=AppGoatUtil::getSession();
+    $username=$session[COLUMN_USERNAME];
+
+    // ホスト名取得且つ正規表現用にエスケープ
+    $host=preg_quote($_SERVER['HTTP_HOST'], '/');
+    $str="/^https?\:\/\/".$host."\/Users\/".$username."\/Web\/Scenario2631\/EditSoft\//";
+
+    //文字列チェックに用いる正規表現
+    //本演習では「ホスト名/Web/Scenario2631/EditSoft」をドメインとします
+    //リダイレクト先に設定されたURL
+    $url=$param[parent::REDIRECT_URL];
+
+    //正規表現マッチを行い、一致すればtrueを返す
+    if(preg_match($str,$url)) {
+        return true;
+    }
+    return false;
+}
