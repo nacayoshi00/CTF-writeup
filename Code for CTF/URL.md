@@ -1,5 +1,5 @@
 - SQL Injection
-
+    http://pentestmonkey.net/cheat-sheet/sql-injection/postgres-sql-injection-cheat-sheet
     https://www.netsparker.com/blog/web-security/sql-injection-cheat-sheet/
     http://pentestmonkey.net/cheat-sheet/sql-injection/mysql-sql-injection-cheat-sheet
     http://www.sqlinjectionwiki.com/categories/2/mysql-sql-injection-cheat-sheet/
@@ -34,3 +34,4 @@
 
 - hardening CTF writeup
     http://yuta1024.hateblo.jp/entry/2016/02/28/000112
+    https://n0where.net/system-hardening-guide/
