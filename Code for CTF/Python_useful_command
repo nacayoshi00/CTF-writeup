@@ -1,0 +1,33 @@
+
+- To convert hex to Ascii
+    print "3232343536376168".decode("hex")  hex->ascii
+    print "abcde".encode("hex")             ascii->hex
+
+- To invert string
+    str = "asdfghjkl"
+    print str[::-1]
+    print str[0:5]
+
+- To convert char to hex
+    print hex(ord("a"))   char->hex
+    print chr(0x34)       hex->char
+
+- Useful string method
+    string.split(",")
+    string.replace("a","b")
+    string.search("a")
+    len(string)
+
+- Useful list method
+    list.append("a")
+    list.search("a")
+    len(list)
+
+- Useful iteration
+    import itertools
+    for i in zip(lista, listb)
+
+
+- Useful library
+    struct
+     print struct.pack("<I",0x12345678)
