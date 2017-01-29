@@ -35,3 +35,4 @@
 - hardening CTF writeup
     http://yuta1024.hateblo.jp/entry/2016/02/28/000112
     https://n0where.net/system-hardening-guide/
+    https://geekflare.com/apache-web-server-hardening-security/
