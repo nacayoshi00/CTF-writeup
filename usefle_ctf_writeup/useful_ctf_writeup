@@ -1,0 +1,26 @@
+
+
+-Reverse
+  - Using capstone
+    https://hxp.io/blog/16/CONFidence%20CTF%202015:%20Reversing%20400%20%22Deobfuscate%20Me%22%20writeup/
+
+
+
+
+
+  
+
+
+
+
+
+- Crypto
+  - PyCrypt
+    https://gist.github.com/chrcoe/9667052
+
+- Pwn
+
+  - shotest send exploit
+    int 0x80    syscall number: http://syscalls.kernelgrok.com/
+    
+     

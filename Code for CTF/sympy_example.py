@@ -35,3 +35,7 @@ while 1:
 primelist.sort()
 for i in primelist:
     print i
+
+
+# factorization
+sympy.factorint(2016)

@@ -100,3 +100,15 @@ volatility
 
 https://books.google.co.jp/books?id=U1jOAwAAQBAJ&pg=PA340&lpg=PA340&dq=volatility+hosts+file&source=bl&ots=yhwCSDVWYo&sig=Or27HphK_IoBXkqyLD96WTXpjaw&hl=en&sa=X&ved=0ahUKEwibldi41enQAhULi7wKHRAkAqYQ6AEIOTAF#v=onepage&q=volatility%20hosts%20file&f=false
 https://volatility-labs.blogspot.jp/2012/09/howto-scan-for-internet-cachehistory.html
+
+
+Directory travasal
+
+..%2f..%2f..%2f..%2f..%2f..%2f..%2f..%2f..%2f..%2f..%2f..%2fflag
+
+Do use "%2f" instead of "/" in browser, because brouser may delete "/" as default setting.
+So can't send "../" to Web server.
+
+Use the X-forwarded-for to spoof src address.
+
+X-FORWARDED-FOR: 129.78.138.66, 129.78.64.103

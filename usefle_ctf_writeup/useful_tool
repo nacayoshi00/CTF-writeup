@@ -1,0 +1,17 @@
+-useful tool list
+  - doraco's tool list
+    https://dev.dracos-linux.org/projects/dracoslinux/wiki/Web_Attack
+
+
+- fix pcapng
+  -pcapfix
+    https://f00l.de/pcapfix/
+
+
+  -tcpflow
+    can be used to recontruct it
+
+
+-visualization
+  -graphviz
+    https://gephi.org/
